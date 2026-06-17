@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>企业全域数字员工能力地图 · 马上消费</title>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<style>
+/* ===================== CSS 变量（深色默认） ===================== */
+:root {
+  --bg-page: #0A0A0F;
+  --bg-card: rgba(255,255,255,0.04);
+  --bg-card-hover: rgba(255,255,255,0.08);
+  --bg-input: rgba(255,255,255,0.06);
+  --bg-input-focus: rgba(255,255,255,0.08);
+  --bg-modal: #1C1C1E;
+  --bg-nav: rgba(20, 20, 28, 0.72);
+
+  --text-primary: #F5F5F7;
+  --text-secondary: #C7C7CC;
+  --text-tertiary: #8E8E93;
+  --text-quaternary: #636366;
+
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-medium: rgba(255,255,255,0.1);
+  --border-strong: rgba(255,255,255,0.15);
+
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.3);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,0.4);
+
+  --mask-bg: rgba(0,0,0,0.6);
+  --bar-bg: rgba(255,255,255,0.08);
+  --accent-blue: #0A84FF;
+  --accent-orange: #FF9F0A;
+  --accent-red: #FF453A;
+  --accent-green: #30D158;
+  --accent-purple: #BF5AF2;
+  --accent-cyan: #64D2FF;
+}
+
+/* 浅色模式 */
+[data-theme="light"] {
+  --bg-page: #F5F5F7;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F2F2F7;
+  --bg-input: #F2F2F7;
+  --bg-input-focus: #FFFFFF;
+  --bg-modal: #FFFFFF;
+  --bg-nav: rgba(255, 255, 255, 0.8);
+
+  --text-primary: #1D1D1F;
+  --text-secondary: #424245;
+  --text-tertiary: #6E6E73;
+  --text-quaternary: #A1A1A6;
+
+  --border-subtle: rgba(0,0,0,0.06);
+  --border-medium: rgba(0,0,0,0.1);
+  --border-strong: rgba(0,0,0,0.15);
+
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+
+  --mask-bg: rgba(0,0,0,0.3);
+  --bar-bg: rgba(0,0,0,0.08);
+}
+
+/* ===================== 基础 ===================== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  font-family: -apple-system, "SF Pro Display", "PingFang SC", "Helvetica Neue", sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background .3s, color .3s;
+}
+body { font-size: clamp(12px, 0.83vw, 16px); }
+a { color: var(--accent-blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ===================== 容器 ===================== */
+.container { width: min(100%, 1760px); margin: 0 auto; padding: clamp(24px, 2.4vw, 48px) clamp(32px, 3.2vw, 64px); }
+
+/* ===================== 顶部毛玻璃导航 ===================== */
+.nav {
+  position: sticky; top: 0; z-index: 100;
+  height: clamp(56px, 5.6vw, 72px);
+  background: var(--bg-nav);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex; align-items: center;
+  padding: 0 clamp(32px, 3.2vw, 64px);
+  transition: background .3s, border-color .3s;
+}
+.nav-logo { font-size: clamp(14px, 1vw, 17px); font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+.nav-logo::before { content: ''; width: 8px; height: 8px; background: var(--accent-blue); border-radius: 50%; box-shadow: 0 0 12px var(--accent-blue); }
+.nav-title { margin-left: clamp(16px, 1.6vw, 24px); font-size: clamp(12px, 0.85vw, 14px); color: var(--text-tertiary); font-weight: 400; }
+.nav-right { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.nav-btn { background: var(--bg-card); border: 1px solid var(--border-subtle); padding: 8px 16px; border-radius: 20px; font-size: clamp(12px, 0.83vw, 13px); color: var(--text-primary); cursor: pointer; transition: all .2s; font-family: inherit; }
+.nav-btn:hover { background: var(--bg-card-hover); }
+.nav-btn.primary { background: var(--accent-blue); border-color: var(--accent-blue); color: #fff; }
+.nav-btn.primary:hover { background: #0077ED; }
+
+/* ===================== Hero 第 1 页 ===================== */
+.hero { padding-top: clamp(40px, 4vw, 80px); padding-bottom: clamp(40px, 4vw, 80px); }
+.hero-eyebrow { font-size: clamp(13px, 0.9vw, 16px); color: var(--accent-blue); font-weight: 600; letter-spacing: 0.5px; }
+.hero-title {
+  font-size: clamp(36px, 4.6vw, 80px);
+  font-weight: 800; line-height: 1.05;
+  color: var(--text-primary);
+  margin: clamp(12px, 1.2vw, 16px) 0 clamp(16px, 1.6vw, 24px);
+  letter-spacing: -0.02em;
+  word-break: break-word;
+}
+.hero-title .hl { background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero-sub {
+  font-size: clamp(15px, 1.6vw, 24px);
+  color: var(--text-tertiary); line-height: 1.5;
+  max-width: 100%;
+  font-weight: 400;
+  word-break: break-word;
+}
+
+/* 4 个关键数字 */
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: clamp(12px, 1.2vw, 24px);
+  margin: clamp(40px, 4vw, 64px) 0;
+}
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: clamp(16px, 1.6vw, 24px);
+  padding: clamp(20px, 2.4vw, 36px);
+  transition: all .3s;
+  box-shadow: var(--shadow-sm);
+}
+.stat-card:hover { background: var(--bg-card-hover); transform: translateY(-2px); }
+.stat-num { font-size: clamp(36px, 4vw, 64px); font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
+.stat-num.blue { color: var(--accent-blue); }
+.stat-num.red { color: var(--accent-red); }
+.stat-num.green { color: var(--accent-green); }
+.stat-num.purple { color: var(--accent-purple); }
+.stat-num.orange { color: var(--accent-orange); }
+.stat-label { font-size: clamp(13px, 1vw, 17px); color: var(--text-primary); margin-top: clamp(8px, 0.8vw, 12px); font-weight: 600; }
+.stat-sub { font-size: clamp(11px, 0.85vw, 13px); color: var(--text-tertiary); margin-top: 4px; word-break: break-word; }
+
+/* 背景 & 目的区 */
+.two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: clamp(16px, 1.6vw, 24px); }
+.section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: clamp(16px, 1.6vw, 24px);
+  padding: clamp(24px, 2.4vw, 40px);
+  margin-bottom: clamp(16px, 1.6vw, 24px);
+  box-shadow: var(--shadow-sm);
+}
+.section-head { display: flex; align-items: center; gap: 12px; margin-bottom: clamp(12px, 1.2vw, 20px); }
+.section-icon { width: clamp(28px, 2.4vw, 40px); height: clamp(28px, 2.4vw, 40px); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: clamp(14px, 1.2vw, 18px); color: #fff; font-weight: 700; }
+.section-icon.bg { background: linear-gradient(135deg, var(--accent-blue), #5E5CE6); }
+.section-icon.pp { background: linear-gradient(135deg, var(--accent-orange), #FF2D55); }
+.section-title { font-size: clamp(18px, 1.6vw, 26px); font-weight: 700; color: var(--text-primary); }
+.section-text { font-size: clamp(13px, 1vw, 17px); line-height: 1.7; color: var(--text-secondary); word-break: break-word; }
+.section-text p { margin-bottom: clamp(8px, 0.8vw, 12px); }
+.section-text strong { color: var(--text-primary); font-weight: 600; }
+
+/* ===================== 第 2 页：项目集群 ===================== */
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: clamp(20px, 2vw, 32px); flex-wrap: wrap; gap: 16px; }
+.page-eyebrow { font-size: clamp(11px, 0.8vw, 14px); color: var(--accent-blue); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+.page-title { font-size: clamp(28px, 3.2vw, 48px); font-weight: 800; color: var(--text-primary); line-height: 1.1; margin-top: 6px; letter-spacing: -0.02em; word-break: break-word; }
+.page-sub { font-size: clamp(13px, 1.1vw, 19px); color: var(--text-tertiary); margin-top: 8px; }
+.page-meta { display: flex; gap: clamp(8px, 0.8vw, 16px); flex-wrap: wrap; }
+.meta-pill { background: var(--bg-card); border: 1px solid var(--border-subtle); padding: clamp(8px, 0.8vw, 12px) clamp(12px, 1.2vw, 20px); border-radius: 12px; box-shadow: var(--shadow-sm); }
+.meta-pill .num { font-size: clamp(18px, 1.6vw, 24px); font-weight: 800; color: var(--accent-blue); }
+.meta-pill .lbl { font-size: clamp(10px, 0.75vw, 12px); color: var(--text-tertiary); margin-top: 2px; }
+
+/* 4 集群 Tab 卡片 */
+.cluster-tabs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: clamp(10px, 1vw, 16px); margin-bottom: clamp(20px, 2vw, 32px); }
+.cluster-tab {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: clamp(14px, 1.4vw, 20px);
+  padding: clamp(16px, 1.6vw, 24px);
+  cursor: pointer;
+  transition: all .25s;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.cluster-tab::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent, var(--accent-blue)); }
+.cluster-tab:hover { background: var(--bg-card-hover); transform: translateY(-1px); }
+.cluster-tab.active { background: var(--bg-card-hover); border-color: var(--accent); box-shadow: 0 4px 20px rgba(10, 132, 255, 0.15); }
+.cluster-tab .ct-check { position: absolute; top: 12px; right: 12px; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: #fff; display: none; align-items: center; justify-content: center; font-size: 12px; }
+.cluster-tab.active .ct-check { display: flex; }
+.cluster-tab .ct-num { font-size: clamp(28px, 2.8vw, 42px); font-weight: 800; color: var(--accent); line-height: 1; }
+.cluster-tab .ct-name { font-size: clamp(15px, 1.2vw, 18px); font-weight: 700; color: var(--text-primary); margin-top: 8px; }
+.cluster-tab .ct-meta { font-size: clamp(11px, 0.83vw, 13px); color: var(--text-tertiary); margin-top: 4px; word-break: break-word; }
+
+/* 项目卡片网格 */
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: clamp(12px, 1.2vw, 20px);
+}
+.project-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: clamp(14px, 1.4vw, 20px);
+  padding: clamp(16px, 1.6vw, 24px);
+  transition: all .25s;
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+.project-card:hover { background: var(--bg-card-hover); transform: translateY(-2px); }
+.project-card::before { content: ''; position: absolute; left: 0; top: 16px; bottom: 16px; width: 3px; background: var(--accent, var(--accent-blue)); border-radius: 0 4px 4px 0; }
+.pc-id { font-size: clamp(10px, 0.7vw, 12px); color: var(--accent, var(--accent-blue)); font-weight: 700; letter-spacing: 0.5px; }
+.pc-name { font-size: clamp(16px, 1.4vw, 22px); font-weight: 700; color: var(--text-primary); margin-top: 6px; word-break: break-word; }
+.pc-domain { font-size: clamp(11px, 0.85vw, 13px); color: var(--text-tertiary); margin-top: 4px; }
+.pc-owner { font-size: clamp(12px, 0.9vw, 14px); color: var(--text-secondary); margin-top: clamp(8px, 0.8vw, 12px); display: flex; align-items: center; gap: 6px; }
+.pc-owner::before { content: '👤'; font-size: 0.9em; }
+
+/* 进度条：可直接拖拽编辑 */
+.pc-progress { margin-top: clamp(12px, 1.2vw, 16px); }
+.pc-progress .pc-bar {
+  height: 8px; background: var(--bar-bg); border-radius: 4px; overflow: visible;
+  position: relative; cursor: grab;
+}
+.pc-progress .pc-bar:active { cursor: grabbing; }
+.pc-progress .pc-fill {
+  height: 100%; background: var(--accent, var(--accent-blue));
+  border-radius: 4px; transition: width .1s;
+  position: relative; min-width: 0;
+}
+.pc-progress .pc-fill::after {
+  content: ''; position: absolute; right: -7px; top: 50%; transform: translateY(-50%);
+  width: 14px; height: 14px; background: var(--bg-page);
+  border: 2px solid var(--accent, var(--accent-blue));
+  border-radius: 50%; box-shadow: var(--shadow-sm);
+  transition: transform .15s, box-shadow .15s;
+}
+.pc-progress .pc-bar:hover .pc-fill::after { transform: translateY(-50%) scale(1.2); box-shadow: var(--shadow-md); }
+.pc-progress .pc-pct { font-size: clamp(11px, 0.85vw, 13px); color: var(--text-primary); font-weight: 600; margin-top: 6px; display: flex; justify-content: space-between; }
+.pc-progress .pc-pct .pct-hint { color: var(--text-tertiary); font-weight: 400; font-size: 0.85em; }
+
+/* 卡片操作按钮 */
+.pc-actions { display: flex; gap: 8px; margin-top: clamp(12px, 1.2vw, 16px); }
+.pc-btn { flex: 1; background: var(--bg-card-hover); border: 1px solid var(--border-subtle); padding: clamp(6px, 0.6vw, 8px) 0; border-radius: 8px; font-size: clamp(11px, 0.85vw, 13px); color: var(--text-primary); cursor: pointer; transition: all .2s; font-family: inherit; }
+.pc-btn:hover { background: var(--bg-card); border-color: var(--border-medium); }
+.pc-btn.primary { background: var(--accent, var(--accent-blue)); border-color: var(--accent, var(--accent-blue)); color: #fff; }
+.pc-btn.primary:hover { filter: brightness(1.1); }
+
+.empty { text-align: center; padding: clamp(40px, 4vw, 60px) 20px; color: var(--text-tertiary); font-size: clamp(13px, 1vw, 15px); }
+
+/* ===================== 第 3 页：旭日图能力地图 ===================== */
+.sunburst-section { padding-top: 0; }
+.sb-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: clamp(10px, 1vw, 16px); margin-bottom: clamp(20px, 2vw, 28px); }
+.sb-stat { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: clamp(12px, 1.2vw, 16px); padding: clamp(14px, 1.4vw, 20px); box-shadow: var(--shadow-sm); }
+.sb-stat .n { font-size: clamp(28px, 2.8vw, 40px); font-weight: 800; line-height: 1; }
+.sb-stat .l { font-size: clamp(12px, 0.9vw, 14px); color: var(--text-tertiary); margin-top: 6px; }
+.sb-stat .n.c1 { color: #D85A30; }
+.sb-stat .n.c2 { color: #378ADD; }
+.sb-stat .n.c3 { color: #7F77DD; }
+.sb-stat .n.c4 { color: #BA7517; }
+
+.sb-legends { display: flex; flex-direction: column; gap: 10px; margin-bottom: clamp(16px, 1.6vw, 24px); }
+.sb-legend-row { display: flex; flex-wrap: wrap; gap: clamp(12px, 1.2vw, 18px); align-items: center; font-size: clamp(12px, 0.9vw, 14px); color: var(--text-secondary); }
+.sb-legend-row .lbl { font-weight: 700; color: var(--text-primary); min-width: 48px; }
+.sb-legend-row .item { display: flex; align-items: center; gap: 6px; }
+.sb-legend-row .dot { width: 12px; height: 12px; border-radius: 3px; }
+.sb-legend-row .dot.round { border-radius: 50%; }
+
+.sb-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); gap: clamp(20px, 2vw, 40px); align-items: start; }
+@media (max-width: 900px) { .sb-layout { grid-template-columns: 1fr; } }
+.sb-chart-wrap {
+  background: var(--bg-card); border: 1px solid var(--border-subtle);
+  border-radius: clamp(16px, 1.6vw, 24px); padding: clamp(16px, 1.6vw, 28px);
+  box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; align-items: center;
+}
+#sunburst { width: 100%; max-width: 560px; }
+.sb-hint { font-size: clamp(12px, 0.9vw, 14px); color: var(--text-tertiary); margin-top: 12px; text-align: center; min-height: 20px; }
+
+/* 右侧聚焦面板 */
+.sb-panel { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: clamp(16px, 1.6vw, 24px); padding: clamp(20px, 2vw, 28px); box-shadow: var(--shadow-sm); position: sticky; top: clamp(80px, 8vw, 96px); }
+.sb-panel-eyebrow { font-size: clamp(11px, 0.8vw, 13px); color: var(--accent-blue); font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+.sb-panel-title { font-size: clamp(18px, 1.6vw, 24px); font-weight: 800; color: var(--text-primary); margin: 6px 0 4px; word-break: break-word; }
+.sb-panel-path { font-size: clamp(12px, 0.9vw, 14px); color: var(--text-tertiary); margin-bottom: clamp(16px, 1.6vw, 20px); word-break: break-word; }
+.sb-panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: clamp(16px, 1.6vw, 20px); }
+.sb-mini { background: var(--bg-card-hover); border-radius: 12px; padding: clamp(12px, 1.2vw, 16px); }
+.sb-mini .n { font-size: clamp(20px, 2vw, 28px); font-weight: 800; color: var(--text-primary); line-height: 1; }
+.sb-mini .l { font-size: clamp(11px, 0.8vw, 12px); color: var(--text-tertiary); margin-top: 4px; }
+.sb-stage-bars { display: flex; flex-direction: column; gap: 10px; }
+.sb-stage-bar .top { display: flex; justify-content: space-between; font-size: clamp(12px, 0.9vw, 13px); color: var(--text-secondary); margin-bottom: 4px; }
+.sb-stage-bar .track { height: 8px; background: var(--bar-bg); border-radius: 4px; overflow: hidden; }
+.sb-stage-bar .fill { height: 100%; border-radius: 4px; transition: width .4s; }
+.sb-panel-list { margin-top: clamp(16px, 1.6vw, 20px); }
+.sb-panel-list .pl-head { font-size: clamp(11px, 0.8vw, 13px); color: var(--text-tertiary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+.sb-proj-item { display: flex; align-items: center; gap: 8px; padding: 7px 0; font-size: clamp(12px, 0.9vw, 14px); color: var(--text-primary); border-bottom: 1px solid var(--border-subtle); }
+.sb-proj-item:last-child { border-bottom: none; }
+.sb-proj-item .sdot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.sb-proj-item .pdomain { color: var(--text-tertiary); font-size: 0.85em; margin-left: auto; }
+
+/* ===================== 弹窗：名片 + 编辑（按图片） ===================== */
+.modal-mask { position: fixed; inset: 0; background: var(--mask-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; transition: background .3s; }
+.modal-mask.open { display: flex; }
+.modal { background: var(--bg-modal); border: 1px solid var(--border-subtle); border-radius: clamp(20px, 2vw, 28px); width: min(720px, 100%); max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
+.modal-head { padding: clamp(16px, 1.6vw, 24px) clamp(20px, 2vw, 32px); border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; }
+.modal-title { font-size: clamp(16px, 1.4vw, 22px); font-weight: 700; color: var(--text-primary); }
+.modal-close { background: var(--bg-card-hover); border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px; color: var(--text-tertiary); display: flex; align-items: center; justify-content: center; }
+.modal-close:hover { background: var(--border-medium); }
+.modal-body { padding: clamp(20px, 2vw, 28px) clamp(20px, 2vw, 32px); overflow-y: auto; }
+
+/* 基础信息表（按图片风格） */
+.info-table { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border-subtle); border-radius: clamp(12px, 1.2vw, 16px); overflow: hidden; margin-bottom: clamp(20px, 2vw, 24px); }
+.info-table .it-row { display: contents; }
+.info-table .it-key, .info-table .it-val { background: var(--bg-card); padding: clamp(12px, 1.2vw, 16px) clamp(16px, 1.6vw, 20px); }
+.info-table .it-key { font-size: clamp(11px, 0.85vw, 13px); color: var(--text-tertiary); font-weight: 500; }
+.info-table .it-val { font-size: clamp(13px, 1vw, 15px); color: var(--text-primary); font-weight: 600; }
+
+/* 申请表单链接按钮 */
+.link-row { margin-bottom: clamp(20px, 2vw, 24px); display: flex; gap: 10px; flex-wrap: wrap; }
+.link-btn {
+  flex: 1; min-width: 200px;
+  background: linear-gradient(135deg, var(--accent-blue), #5E5CE6);
+  border: none; padding: clamp(12px, 1.2vw, 14px) clamp(20px, 2vw, 24px);
+  border-radius: clamp(12px, 1.2vw, 16px);
+  color: #fff; font-size: clamp(13px, 1vw, 15px); font-weight: 600;
+  cursor: pointer; transition: all .2s; font-family: inherit;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
+}
+.link-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(10, 132, 255, 0.4); }
+.link-btn.secondary { background: linear-gradient(135deg, var(--accent-blue), #5E5CE6); color: #fff; border: none; box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3); }
+.link-btn.secondary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(10, 132, 255, 0.4); }
+
+/* 名片预览（按图片风格） */
+.biz-card {
+  background: linear-gradient(135deg, var(--accent-blue), #5E5CE6);
+  border-radius: clamp(16px, 1.6vw, 20px);
+  padding: clamp(20px, 2vw, 28px);
+  margin-bottom: clamp(20px, 2vw, 28px);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.biz-card::before { content: ''; position: absolute; top: -50%; right: -20%; width: 60%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%); }
+.bc-head { display: flex; align-items: center; gap: clamp(12px, 1.2vw, 16px); position: relative; z-index: 1; }
+.bc-avatar { width: clamp(48px, 4.8vw, 64px); height: clamp(48px, 4.8vw, 64px); border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: clamp(24px, 2.4vw, 32px); border: 2px solid rgba(255,255,255,0.3); flex-shrink: 0; }
+.bc-title-wrap { flex: 1; min-width: 0; }
+.bc-title { font-size: clamp(18px, 1.6vw, 24px); font-weight: 800; word-break: break-word; }
+.bc-tag { display: inline-block; background: rgba(255,255,255,0.25); padding: 3px 10px; border-radius: 8px; font-size: clamp(10px, 0.8vw, 12px); font-weight: 600; margin-top: 6px; }
+.bc-body { margin-top: clamp(12px, 1.2vw, 16px); position: relative; z-index: 1; }
+.bc-row { font-size: clamp(12px, 1vw, 14px); padding: 6px 0; display: flex; align-items: center; gap: 6px; }
+.bc-link { color: #fff; text-decoration: underline; word-break: break-all; }
+
+/* 字段编辑 */
+.section-label { font-size: clamp(12px, 0.9vw, 14px); color: var(--text-tertiary); margin: clamp(16px, 1.6vw, 20px) 0 clamp(8px, 0.8vw, 10px); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.field { margin-bottom: clamp(12px, 1.2vw, 16px); }
+.field label { display: block; font-size: clamp(11px, 0.85vw, 13px); color: var(--text-tertiary); margin-bottom: 6px; font-weight: 500; }
+.field input, .field select, .field textarea {
+  width: 100%; padding: clamp(8px, 0.8vw, 10px) clamp(12px, 1.2vw, 14px);
+  background: var(--bg-input); border: 1px solid var(--border-medium);
+  border-radius: 10px; font-size: clamp(13px, 0.9vw, 14px);
+  font-family: inherit; color: var(--text-primary);
+  transition: all .2s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15); }
+.field textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
+.field input:disabled { background: var(--bg-card); color: var(--text-tertiary); cursor: not-allowed; }
+.field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: clamp(12px, 1.2vw, 16px); }
+
+.modal-foot { padding: clamp(12px, 1.2vw, 16px) clamp(20px, 2vw, 32px); border-top: 1px solid var(--border-subtle); display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+.btn { padding: clamp(8px, 0.8vw, 10px) clamp(16px, 1.6vw, 20px); border-radius: 10px; border: none; font-size: clamp(12px, 0.9vw, 14px); font-weight: 600; cursor: pointer; font-family: inherit; transition: all .2s; }
+.btn.ghost { background: var(--bg-card-hover); color: var(--text-primary); }
+.btn.ghost:hover { background: var(--border-medium); }
+.btn.primary { background: var(--accent-blue); color: #fff; }
+.btn.primary:hover { background: #0077ED; }
+.btn.danger { background: rgba(255, 69, 58, 0.15); color: var(--accent-red); }
+.btn.danger:hover { background: rgba(255, 69, 58, 0.25); }
+
+/* ===================== Toast ===================== */
+.toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--bg-modal); color: var(--text-primary); padding: 12px 24px; border-radius: 12px; font-size: 14px; opacity: 0; transition: all .3s; z-index: 300; pointer-events: none; border: 1px solid var(--border-medium); box-shadow: var(--shadow-lg); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===================== 小屏适配 ===================== */
+@media (max-width: 768px) {
+  .nav { padding: 0 16px; }
+  .nav-title { display: none; }
+  .cluster-tabs { grid-template-columns: 1fr 1fr; }
+  .project-grid { grid-template-columns: 1fr; }
+  .info-table { grid-template-columns: 1fr; }
+  .hero-title { font-size: 32px; }
+  .sb-panel { position: static; }
+}
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<nav class="nav">
+  <div class="nav-logo">马上消费 · 数字员工</div>
+  <div class="nav-title">企业全域数字员工能力地图 · v1.6.0</div>
+  <div class="nav-right">
+    <button class="nav-btn" onclick="document.getElementById('sunburst-page').scrollIntoView({behavior:'smooth'})">🗺️ 能力地图</button>
+    <button class="nav-btn" id="themeBtn" onclick="toggleTheme()">🌙 深色</button>
+  </div>
+</nav>
+
+<!-- =================== 第 1 页：封面 + 背景 + 目的 =================== -->
+<section class="container hero">
+  <div class="hero-eyebrow">马上消费 · 2026 战略专项</div>
+  <h1 class="hero-title">构建面向未来的<br><span class="hl">企业全域数字员工</span>能力地图</h1>
+  <p class="hero-sub">以 AI 原生为方法论、以业务价值为锚点，构建 4 大集群、覆盖 17 大业务域、落地 24 个数字员工项目的全域能力体系</p>
+
+  <div class="hero-stats">
+    <div class="stat-card">
+      <div class="stat-num blue">17</div>
+      <div class="stat-label">一级业务域</div>
+      <div class="stat-sub">覆盖企业经营全链路</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num orange">4</div>
+      <div class="stat-label">业务集群</div>
+      <div class="stat-sub">经营·风控·支撑·技术</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num green">24</div>
+      <div class="stat-label">数字员工项目</div>
+      <div class="stat-sub">2026 立项全覆盖</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num purple">3</div>
+      <div class="stat-label">建设阶段</div>
+      <div class="stat-sub">落地 · 试点 · 规划</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="section">
+      <div class="section-head">
+        <div class="section-icon bg">B</div>
+        <div class="section-title">为什么做这件事</div>
+      </div>
+      <div class="section-text">
+        <p><strong>战略升级：</strong>2026 年公司提出"AI Native"战略，将 AI 能力深度嵌入业务全流程，数字员工作为新质生产力的核心载体，承担提效、控险、拓客三大使命。</p>
+        <p><strong>能力沉淀：</strong>2024-2025 年散落在各业务线的 AI 应用已初见成效，但缺乏统一规划与协同，存在重复建设、数据孤岛、ROI 不清晰等痛点。</p>
+        <p><strong>组织进化：</strong>从"工具使用者"向"人机协同组织"演进，需要一份可对齐、可追踪、可复盘的数字员工全域能力地图。</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <div class="section-icon pp">G</div>
+        <div class="section-title">我们要达成什么</div>
+      </div>
+      <div class="section-text">
+        <p><strong>一张图看清家底：</strong>用 4 大集群 + 17 业务域 + 24 项目的三层结构，让全员一眼看懂"我们现在有什么、缺什么、明年建什么"。</p>
+        <p><strong>推动跨域协同：</strong>识别风控超载 6 队、销售转化/信贷审批/智能客服/支付结算 4 大业务缺口，拉通部门墙。</p>
+        <p><strong>支撑年度立项：</strong>短板规划页直接输出"待规划场景清单"，作为 2026 二期立项的核心输入。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== 第 2 页：旭日图能力地图（含包含关系） =================== -->
+<section class="container sunburst-section" id="sunburst-page">
+  <div class="page-head">
+    <div>
+      <div class="page-eyebrow">Capability Map</div>
+      <h2 class="page-title">全域能力地图</h2>
+      <p class="page-sub">集群 → 业务域 → 项目 三层同心圆 · 颜色明暗标记建设阶段 · 点击扇区下钻聚焦</p>
+    </div>
+  </div>
+
+  <div class="sb-stats">
+    <div class="sb-stat"><div class="n c1">4</div><div class="l">业务集群</div></div>
+    <div class="sb-stat"><div class="n c2">17</div><div class="l">一级业务域</div></div>
+    <div class="sb-stat"><div class="n c3">24</div><div class="l">数字员工项目</div></div>
+    <div class="sb-stat"><div class="n c4">3</div><div class="l">建设阶段</div></div>
+  </div>
+
+  <div class="sb-legends">
+    <div class="sb-legend-row">
+      <span class="lbl">集群</span>
+      <span class="item"><span class="dot" style="background:#D85A30"></span>经营销售</span>
+      <span class="item"><span class="dot" style="background:#378ADD"></span>风险经营</span>
+      <span class="item"><span class="dot" style="background:#7F77DD"></span>后台支撑</span>
+      <span class="item"><span class="dot" style="background:#BA7517"></span>技术支撑</span>
+    </div>
+    <div class="sb-legend-row">
+      <span class="lbl">阶段</span>
+      <span class="item"><span class="dot round" style="background:#1D9E75"></span>落地（深绿）</span>
+      <span class="item"><span class="dot round" style="background:#5DCAA5"></span>试点（中绿）</span>
+      <span class="item"><span class="dot round" style="background:#C9E9DD"></span>规划（浅绿）</span>
+    </div>
+  </div>
+
+  <div class="sb-layout">
+    <div class="sb-chart-wrap">
+      <svg id="sunburst" role="img" aria-label="数字员工能力地图旭日图：集群、业务域、项目三层包含关系"></svg>
+      <div class="sb-hint" id="sbHint">点击任意扇区可下钻聚焦 · 点击中心返回全局</div>
+    </div>
+
+    <aside class="sb-panel">
+      <div class="sb-panel-eyebrow" id="pEyebrow">全域总览</div>
+      <div class="sb-panel-title" id="pTitle">企业全域数字员工</div>
+      <div class="sb-panel-path" id="pPath">4 大集群 · 17 业务域 · 24 项目</div>
+      <div class="sb-panel-grid">
+        <div class="sb-mini"><div class="n" id="pDomains">17</div><div class="l">业务域</div></div>
+        <div class="sb-mini"><div class="n" id="pProjects">24</div><div class="l">项目</div></div>
+      </div>
+      <div class="sb-stage-bars" id="pStageBars"></div>
+      <div class="sb-panel-list">
+        <div class="pl-head" id="pListHead">项目清单</div>
+        <div id="pList"></div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- =================== 第 3 页：项目集群详情 =================== -->
+<section class="container" style="padding-top: 0;">
+  <div class="page-head">
+    <div>
+      <div class="page-eyebrow">Project Portfolio</div>
+      <h2 class="page-title">24 个数字员工项目集群</h2>
+      <p class="page-sub">点击集群切换分类 · 拖拽卡片进度条直接编辑</p>
+    </div>
+    <div class="page-meta">
+      <div class="meta-pill"><div class="num" id="mTotal">24</div><div class="lbl">项目总数</div></div>
+      <div class="meta-pill"><div class="num" id="mShown">3</div><div class="lbl">当前展示</div></div>
+    </div>
+  </div>
+
+  <div class="cluster-tabs" id="tabs"></div>
+  <div class="project-grid" id="cards"></div>
+</section>
+
+<!-- =================== 详情弹窗（只读） =================== -->
+<div class="modal-mask" id="modalDetail" onclick="if(event.target===this) closeDetail()">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="dTitle">项目详情</div>
+      <button class="modal-close" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-table" id="dInfoTable">
+        <div class="it-key">项目名称</div><div class="it-val" id="dName">—</div>
+        <div class="it-key">所属集群</div><div class="it-val" id="dCluster">—</div>
+        <div class="it-key">一级业务域</div><div class="it-val" id="dDomain">—</div>
+        <div class="it-key">负责人</div><div class="it-val" id="dOwner">—</div>
+      </div>
+      <div class="link-row">
+        <a class="link-btn" id="dFormBtn" href="#" target="_blank" rel="noopener">📄 查看申请表</a>
+        <a class="link-btn secondary" id="dCardBtn" href="#" target="_blank" rel="noopener">🪪 数字员工名片</a>
+      </div>
+      <div class="biz-card" id="dBizCard">
+        <div class="bc-head">
+          <div class="bc-avatar">🤖</div>
+          <div class="bc-title-wrap">
+            <div class="bc-title" id="dBcTitle">项目名</div>
+            <div class="bc-tag" id="dBcTag">业务域</div>
+          </div>
+        </div>
+        <div class="bc-body">
+          <div class="bc-row" id="dBcOwner">👤 负责人：—</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn primary" onclick="closeDetail()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- =================== 编辑弹窗（可编辑） =================== -->
+<div class="modal-mask" id="modalEdit" onclick="if(event.target===this) closeEdit()">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="eTitle">编辑项目</div>
+      <button class="modal-close" onclick="closeEdit()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field"><label>项目名称</label><input id="eName"></div>
+        <div class="field"><label>负责人</label><input id="eOwner"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>一级业务域</label><input id="eDomain"></div>
+        <div class="field"><label>建设状态</label>
+          <select id="eStatus">
+            <option value="落地">落地</option>
+            <option value="试点">试点</option>
+            <option value="规划">规划</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>申请表链接</label><input id="eForm" placeholder="https://..."></div>
+      <div class="field"><label>名片链接</label><input id="eCard" placeholder="https://..."></div>
+      <div class="field"><label>覆盖场景</label><textarea id="eScenario"></textarea></div>
+      <div class="field"><label>预期价值 / 量化收益</label><textarea id="eValue"></textarea></div>
+      <div class="field"><label>跨域协同关系</label><textarea id="eSynergy"></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn danger" onclick="resetEdit()">恢复默认</button>
+      <button class="btn ghost" onclick="closeEdit()">取消</button>
+      <button class="btn primary" onclick="saveEdit()">保存修改</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">已保存</div>
+
+<script>
+/* ===================== 数据（24 个项目） ===================== */
+const DEFAULT = [
+  {id:1,  cluster:"经营销售", domain:"市场销售域", name:"柿子",                     owner:"许向葵",          scenario:"市场销售场景下的获客转化与运营",        value:"—",                  synergy:"协同 金融生态",     status:"规划", progress:15, form:"https://weikezhijia.feishu.cn/wiki/TojpwCKSXirjyPkWAwzcdbO1nEb", card:"https://weikezhijia.feishu.cn/wiki/DhoKwxc2Ti2519kSPiXcKodsnpf"},
+  {id:2,  cluster:"经营销售", domain:"市场营销域", name:"ADP 智能配置专员",     owner:"汪禹伽",          scenario:"市场营销域内的智能配置与投放",             value:"—",                  synergy:"—",                  status:"规划", progress:15, form:"https://weikezhijia.feishu.cn/wiki/AfoTwUfEOiL5RqkOsXScz1hKnKf", card:"https://weikezhijia.feishu.cn/wiki/Lpa3wZbTciMx0zks8rTcIVYEnQf"},
+  {id:3,  cluster:"经营销售", domain:"金融生态",    name:"马小贝",                 owner:"孙健哲",          scenario:"金融生态场景的客户经营",                       value:"—",                  synergy:"协同 市场销售",     status:"规划", progress:15, form:"https://weikezhijia.feishu.cn/wiki/SlFLwlIjFiCZyXk4JzAcBbq1n4x", card:"https://weikezhijia.feishu.cn/wiki/AX6Fw4THtiofsQk6wMScXOt5nKe"},
+  {id:4,  cluster:"风险经营", domain:"风控",          name:"马上查数",              owner:"岳文华",          scenario:"风控数据的快速查询与统计",                       value:"—",                  synergy:"协同 风控/运营",     status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/DulGwJ1L8iYoOzk0Jy8cVHA2nNc?sheet=95fcda", card:"https://weikezhijia.feishu.cn/wiki/ZG9OwZ5QCiwEC2kRwdzcpcesn4d"},
+  {id:5,  cluster:"风险经营", domain:"风控",          name:"征信小智",              owner:"岳文华",          scenario:"风控征信数据的智能解读",                           value:"—",                  synergy:"协同 风控",          status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/HrgpwEMnKiY9FIk2ZkDc7Xr6nSg?renamingWikiNode=false", card:"https://weikezhijia.feishu.cn/wiki/HEgkw6lQ4iJEp8kiBb0cWo7xn0L?renamingWikiNode=false"},
+  {id:6,  cluster:"风险经营", domain:"风控",          name:"变量衍生agent",       owner:"孙梓淇",          scenario:"风控模型变量的自动衍生",                           value:"—",                  synergy:"协同 风控",          status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/GdQQwHThDifjrtksTw6cmsE3nvd", card:"https://weikezhijia.feishu.cn/wiki/CZHHwzPaIisZRJkO7R8c391Mnxg"},
+  {id:7,  cluster:"风险经营", domain:"风控",          name:"特征工程智能体",     owner:"蒋靓",              scenario:"风控特征工程自动化",                                   value:"—",                  synergy:"协同 风控",          status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/ZT6ZwXRtXiNcrkkneTLcaaaHnlc", card:"https://weikezhijia.feishu.cn/wiki/CxLbw2JZniQXvKk6TWecDIphnhg"},
+  {id:8,  cluster:"风险经营", domain:"风控",          name:"风控策略分析师智能体", owner:"陈楚浩",          scenario:"风控策略的智能分析与建议",                         value:"—",                  synergy:"协同 风控",          status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/sheets/LnaFsOzC9hcV0HtMYhic5BOAnxd", card:"https://weikezhijia.feishu.cn/sheets/GBp7sLburhy2p1tlvHucHKu5ngg"},
+  {id:9,  cluster:"风险经营", domain:"风控",          name:"风铃",                       owner:"周亮",              scenario:"风控告警/审计/迎检等场景",                            value:"—",                  synergy:"协同 风控",          status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/sheets/CqUIsxk2XhVJx9tRhc9c60M7nMf", card:"https://weikezhijia.feishu.cn/sheets/KbSYsUJ6qhDFNUtfPmqc8YtlnNh"},
+  {id:10, cluster:"风险经营", domain:"运营",          name:"运营管理专家",         owner:"单治森",          scenario:"运营场景的智能管理与调度",                            value:"—",                  synergy:"协同 风控",          status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/Xv1wwU3wuiKlUWk1ekCcNBeinbh", card:"https://weikezhijia.feishu.cn/wiki/YoXkwbcTWiPUC7kbCRCcN0nnncb"},
+  {id:11, cluster:"风险经营", domain:"运营",          name:"外协智管专员",         owner:"郭敏、王高翔", scenario:"外协供应商的智能管理",                                  value:"—",                  synergy:"协同 采购/法务",     status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/RtHNw6bSjiftmnkaNfdckkKSnec", card:"https://weikezhijia.feishu.cn/wiki/GcI9w4EuNi6ysDkWsgFc9OMQnjf"},
+  {id:12, cluster:"风险经营", domain:"消保",          name:"马小宝",                 owner:"宋永微",          scenario:"消保客服与投诉处理",                                          value:"—",                  synergy:"协同 客服/合规",     status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/TGxXwaOSCiQP4zk16S6cJMksnbb", card:"https://weikezhijia.feishu.cn/wiki/Sj9bwi12ZiO7nYk5GTgcDMVXnQg"},
+  {id:13, cluster:"风险经营", domain:"安全",          name:"小安",                       owner:"白恒斌",          scenario:"安全场景的智能监测",                                              value:"—",                  synergy:"协同 合规/技术",     status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/sheets/AS3csdfNfhuPSqtSSaGcw1R4nGe", card:"https://weikezhijia.feishu.cn/sheets/I7nFsNDdEhqD3ots2ZBcdVQvnCf"},
+  {id:14, cluster:"风险经营", domain:"法务",          name:"法务内控智能助手-法小控", owner:"欧阳怡婕",   scenario:"法务内控的智能审查",                                          value:"—",                  synergy:"协同 合规/采购",     status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/Vwi0wVy12imgFVkoJ4PcxXPUnLg", card:"https://weikezhijia.feishu.cn/wiki/Dw27w0RqgiVehDkKtgvcNrh3nOz"},
+  {id:15, cluster:"后台支撑", domain:"采购",          name:"小采君",                 owner:"宋秀文",          scenario:"采购场景的智能助手",                                              value:"—",                  synergy:"协同 法务/财务",     status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/Ke8RwjRx0isXzokY8vTcepqPnrd", card:"https://weikezhijia.feishu.cn/wiki/C2LgwITGtiIdoxkP4gucL00lnGf"},
+  {id:16, cluster:"后台支撑", domain:"财务",          name:"i财通",                  owner:"张黎",              scenario:"财务核算与费控",                                                  value:"—",                  synergy:"协同 后台/审计",     status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/Z1XFwqe81iSuRnkAyLvcNRHandd", card:"https://weikezhijia.feishu.cn/wiki/LTrmwGljbipuo1kIEOXcoPW6nSb"},
+  {id:17, cluster:"后台支撑", domain:"人力",          name:"超级小i",                 owner:"宋思颖",          scenario:"HR 全流程场景",                                                  value:"—",                  synergy:"协同 各业务部门",   status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/ArKZwYqm2i2wP4kWBKnc2ZHAn1c?from=from_copylink", card:"https://weikezhijia.feishu.cn/wiki/LfbXwPl8siwtukkpFSWcHVtmnA1?from=from_copylink"},
+  {id:18, cluster:"后台支撑", domain:"审计",          name:"审计部智能助手-审小智", owner:"车俏君",          scenario:"审计问答与迎检",                                                  value:"—",                  synergy:"协同 后台/合规",     status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/XgN4wCImTiUo1TkQHskcT3KGn4f", card:"https://weikezhijia.feishu.cn/wiki/PFPCwFhZkisan3kV4E7czQzNnad"},
+  {id:19, cluster:"后台支撑", domain:"办公室",     name:"AI会议运营助理",        owner:"刘也然",          scenario:"会议全流程运营管理",                                          value:"—",                  synergy:"协同 全域",          status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/SKZ9w6AK7iyU8Lkq51wcn8Jynvh", card:"https://weikezhijia.feishu.cn/wiki/BxDBwucFTi6pkRkQ9h9cnWIqnIe?from=from_copylink"},
+  {id:20, cluster:"后台支撑", domain:"设计",          name:"设计师-可可",           owner:"张旭",              scenario:"UI/视觉设计智能体",                                              value:"—",                  synergy:"协同 全域",          status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/NKUTwlDNNiR0YkksNCscvcwNnzd?from=from_copylink", card:"https://weikezhijia.feishu.cn/wiki/J5SMwirSgiv7xqkk8B2cjPAUnfb?from=from_copylink"},
+  {id:21, cluster:"后台支撑", domain:"项目管理",   name:"德鲁克",                 owner:"冯小龙",          scenario:"项目全生命周期管理",                                          value:"—",                  synergy:"协同 全域",          status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/MHMvwZK95iQI7gkAYEUchv6FnPd?renamingWikiNode=false", card:"https://weikezhijia.feishu.cn/wiki/IJTUwcvNniLgxQk8785cyYUenMg"},
+  {id:22, cluster:"技术支撑", domain:"技术研发",   name:"架构师X",                 owner:"常昊",              scenario:"架构设计与评审",                                                  value:"—",                  synergy:"协同 研发团队",     status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/UwmVwrlyGi9wBzkC649cttBinZE?renamingWikiNode=false", card:"https://weikezhijia.feishu.cn/wiki/TlPUwLdFFivANukgMAHcQ7FSnyg?create_from=copy_within_wiki&renamingWikiNode=false"},
+  {id:23, cluster:"技术支撑", domain:"技术研发",   name:"服务台数字员工-Mena(美娜)", owner:"秦绍程",   scenario:"SRE 服务台运维场景",                                          value:"—",                  synergy:"协同 研发/客服",     status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/AeGyw8LVAidLrHktj3icnmQUnBg?open_in_browser=true", card:"https://weikezhijia.feishu.cn/wiki/VNajwwj6IilxGik4WBCcYBCgnKf"},
+  {id:24, cluster:"风险经营", domain:"合规",          name:"i合规",                       owner:"杨田",              scenario:"合规审查与监控",                                                  value:"—",                  synergy:"协同 法务/风控",     status:"试点", progress:35, form:"https://weikezhijia.feishu.cn/wiki/DrOnw6edbinCjMkgvMGcQPIYnMb", card:"https://weikezhijia.feishu.cn/wiki/SOq7wtkK2ilKGjkvhwPcjnFnnFb"},
+];
+
+const CLUSTERS = [
+  { name: "经营销售", color: "#D85A30", textColor: "#4A1B0C", desc: "市场销售 · 市场营销 · 金融生态" },
+  { name: "风险经营", color: "#378ADD", textColor: "#042C53", desc: "风控 · 运营 · 消保 · 安全 · 法务 · 合规" },
+  { name: "后台支撑", color: "#7F77DD", textColor: "#26215C", desc: "采购 · 财务 · 人力 · 审计 · 办公室 · 设计 · 项目" },
+  { name: "技术支撑", color: "#BA7517", textColor: "#412402", desc: "技术研发" },
+];
+
+/* 阶段配色（绿色明暗） */
+const STAGE_COLOR = { "落地":"#1D9E75", "试点":"#5DCAA5", "规划":"#C9E9DD" };
+const STAGE_TEXT  = { "落地":"#04342C", "试点":"#04342C", "规划":"#0F6E56" };
+
+/* 集群/业务域环配色（同色系，集群深、域浅） */
+const CLUSTER_RING = {
+  "经营销售": {fill:"#D85A30", text:"#FFFFFF"},
+  "风险经营": {fill:"#378ADD", text:"#FFFFFF"},
+  "后台支撑": {fill:"#7F77DD", text:"#FFFFFF"},
+  "技术支撑": {fill:"#BA7517", text:"#FFFFFF"}
+};
+const DOMAIN_RING = {
+  "经营销售": {fill:"#F0997B", text:"#4A1B0C"},
+  "风险经营": {fill:"#85B7EB", text:"#042C53"},
+  "后台支撑": {fill:"#AFA9EC", text:"#26215C"},
+  "技术支撑": {fill:"#EF9F27", text:"#412402"}
+};
+
+/* ===================== 主题切换 ===================== */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('themeBtn');
+  btn.textContent = theme === 'light' ? '☀️ 浅色' : '🌙 深色';
+  try { localStorage.setItem('de_theme', theme); } catch(e) {}
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+  applyTheme(cur === 'light' ? 'dark' : 'light');
+}
+
+/* ===================== 状态持久化 ===================== */
+const STORAGE_KEY = "digital_employee_v1_6_0";
+function load() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || DEFAULT; }
+  catch(e) { return DEFAULT; }
+}
+function save(arr) { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+let data = load();
+
+/* ===================== 渲染：项目集群 ===================== */
+let currentCluster = CLUSTERS[0].name;
+
+function renderTabs() {
+  const html = CLUSTERS.map(c => {
+    const cnt = data.filter(x => x.cluster === c.name).length;
+    const active = c.name === currentCluster ? "active" : "";
+    return `<div class="cluster-tab ${active}" style="--accent:${c.color}" onclick="switchCluster('${c.name}')">
+      <div class="ct-check">✓</div>
+      <div class="ct-num">${cnt}</div>
+      <div class="ct-name">${c.name}</div>
+      <div class="ct-meta">${c.desc}</div>
+    </div>`;
+  }).join("");
+  document.getElementById("tabs").innerHTML = html;
+}
+
+function renderCards() {
+  const list = data.filter(x => x.cluster === currentCluster);
+  const cluster = CLUSTERS.find(c => c.name === currentCluster);
+  document.getElementById("mShown").textContent = list.length;
+  if (list.length === 0) {
+    document.getElementById("cards").innerHTML = `<div class="empty" style="grid-column:1/-1">该集群暂无项目</div>`;
+    return;
+  }
+  const html = list.map(x => `
+    <div class="project-card" style="--accent:${cluster.color}">
+      <div class="pc-id">#${String(x.id).padStart(2,"0")}</div>
+      <div class="pc-name">${x.name}</div>
+      <div class="pc-domain">${x.domain}</div>
+      <div class="pc-owner">${x.owner}</div>
+      <div class="pc-progress" data-id="${x.id}">
+        <div class="pc-bar"><div class="pc-fill" style="width:${x.progress}%"></div></div>
+        <div class="pc-pct"><span>项目进度</span><span>${x.progress}%</span></div>
+      </div>
+      <div class="pc-actions">
+        <button class="pc-btn" onclick="openEdit(${x.id})">✏️ 编辑</button>
+        <button class="pc-btn primary" onclick="openDetail(${x.id})">📋 详情</button>
+      </div>
+    </div>
+  `).join("");
+  document.getElementById("cards").innerHTML = html;
+  attachProgressDrag();
+}
+
+function switchCluster(c) {
+  currentCluster = c;
+  renderTabs();
+  renderCards();
+}
+
+/* ===================== 卡片进度条直接拖拽 ===================== */
+function attachProgressDrag() {
+  document.querySelectorAll('.pc-progress').forEach(bar => {
+    const id = parseInt(bar.dataset.id);
+    const fill = bar.querySelector('.pc-fill');
+    const pct = bar.querySelector('.pc-pct span:last-child');
+    const track = bar.querySelector('.pc-bar');
+
+    const onMove = (clientX) => {
+      const rect = track.getBoundingClientRect();
+      let p = Math.round(((clientX - rect.left) / rect.width) * 100);
+      p = Math.max(0, Math.min(100, p));
+      const x = data.find(r => r.id === id);
+      if (!x) return;
+      x.progress = p;
+      fill.style.width = p + '%';
+      pct.textContent = p + '%';
+    };
+
+    let dragging = false;
+    track.addEventListener('mousedown', e => {
+      dragging = true;
+      e.preventDefault();
+      onMove(e.clientX);
+    });
+    document.addEventListener('mousemove', e => { if (dragging) onMove(e.clientX); });
+    document.addEventListener('mouseup', () => {
+      if (dragging) { dragging = false; save(data); showToast('✓ 进度已更新'); }
+    });
+
+    track.addEventListener('touchstart', e => {
+      dragging = true;
+      onMove(e.touches[0].clientX);
+    }, { passive: true });
+    document.addEventListener('touchmove', e => { if (dragging) onMove(e.touches[0].clientX); }, { passive: true });
+    document.addEventListener('touchend', () => {
+      if (dragging) { dragging = false; save(data); showToast('✓ 进度已更新'); }
+    });
+  });
+}
+
+/* ===================== 弹窗 ===================== */
+let detailId = null;
+let editId = null;
+
+function fillDetail(x) {
+  document.getElementById("dName").textContent = x.name;
+  document.getElementById("dCluster").textContent = x.cluster;
+  document.getElementById("dDomain").textContent = x.domain;
+  document.getElementById("dOwner").textContent = x.owner;
+  const dFormBtn = document.getElementById("dFormBtn");
+  const dCardBtn = document.getElementById("dCardBtn");
+  if (x.form) { dFormBtn.href = x.form; dFormBtn.style.display = ''; } else { dFormBtn.style.display = 'none'; }
+  if (x.card) { dCardBtn.href = x.card; dCardBtn.style.display = ''; } else { dCardBtn.style.display = 'none'; }
+  document.getElementById("dBcTitle").textContent = x.name;
+  document.getElementById("dBcTag").textContent = x.domain;
+  document.getElementById("dBcOwner").innerHTML = "👤 负责人：" + (x.owner || "—");
+  document.getElementById("dTitle").textContent = "详情 · " + x.name;
+}
+
+function fillEdit(x) {
+  document.getElementById("eName").value = x.name;
+  document.getElementById("eOwner").value = x.owner;
+  document.getElementById("eDomain").value = x.domain;
+  document.getElementById("eStatus").value = x.status;
+  document.getElementById("eForm").value = x.form || "";
+  document.getElementById("eCard").value = x.card || "";
+  document.getElementById("eScenario").value = x.scenario;
+  document.getElementById("eValue").value = x.value || "";
+  document.getElementById("eSynergy").value = x.synergy;
+  document.getElementById("eTitle").textContent = "编辑 · " + x.name;
+}
+
+function openDetail(id) {
+  const x = data.find(r => r.id === id);
+  if (!x) return;
+  detailId = id;
+  fillDetail(x);
+  document.getElementById("modalDetail").classList.add("open");
+}
+function closeDetail() {
+  document.getElementById("modalDetail").classList.remove("open");
+  detailId = null;
+}
+function openEdit(id) {
+  const x = data.find(r => r.id === id);
+  if (!x) return;
+  editId = id;
+  fillEdit(x);
+  document.getElementById("modalEdit").classList.add("open");
+}
+function closeEdit() {
+  document.getElementById("modalEdit").classList.remove("open");
+  editId = null;
+}
+function saveEdit() {
+  if (editId == null) return;
+  const x = data.find(r => r.id === editId);
+  if (!x) return;
+  x.name = document.getElementById("eName").value.trim();
+  x.domain = document.getElementById("eDomain").value.trim();
+  x.owner = document.getElementById("eOwner").value.trim();
+  x.status = document.getElementById("eStatus").value;
+  x.form = document.getElementById("eForm").value.trim();
+  x.card = document.getElementById("eCard").value.trim();
+  x.scenario = document.getElementById("eScenario").value.trim();
+  x.value = document.getElementById("eValue").value.trim();
+  x.synergy = document.getElementById("eSynergy").value.trim();
+  save(data);
+  renderTabs();
+  renderCards();
+  buildSunburst();
+  if (detailId != null && detailId === editId) {
+    const refreshed = data.find(r => r.id === editId);
+    if (refreshed) fillDetail(refreshed);
+  }
+  closeEdit();
+  showToast("✓ 已保存到本地");
+}
+function resetEdit() {
+  if (editId == null) return;
+  const def = DEFAULT.find(r => r.id === editId);
+  if (!def) return;
+  if (!confirm("恢复此项目为默认数据？")) return;
+  const idx = data.findIndex(r => r.id === editId);
+  data[idx] = JSON.parse(JSON.stringify(def));
+  save(data);
+  renderTabs();
+  renderCards();
+  buildSunburst();
+  if (detailId != null && detailId === editId) {
+    fillDetail(data[idx]);
+  }
+  openEdit(editId);
+  showToast("↻ 已恢复默认");
+}
+
+/* ===================== Toast ===================== */
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+/* ===================== 旭日图 ===================== */
+function buildHierarchy() {
+  const root = { name: "全域", children: [] };
+  const cMap = {};
+  data.forEach(p => {
+    if (!cMap[p.cluster]) { cMap[p.cluster] = { name: p.cluster, children: [], _d: {} }; root.children.push(cMap[p.cluster]); }
+    const c = cMap[p.cluster];
+    if (!c._d[p.domain]) { c._d[p.domain] = { name: p.domain, children: [] }; c.children.push(c._d[p.domain]); }
+    c._d[p.domain].children.push({ name: p.name, stage: p.status, owner: p.owner, value: 1 });
+  });
+  // 按 CLUSTERS 顺序排列
+  root.children.sort((a,b) => CLUSTERS.findIndex(c=>c.name===a.name) - CLUSTERS.findIndex(c=>c.name===b.name));
+  return root;
+}
+
+let sbRoot, sbPath, sbLabel, sbParent, sbCenter, sbArc, sbRadius;
+
+function clusterOf(d) {
+  const a = d.ancestors().find(n => n.depth === 1);
+  return a ? a.data.name : null;
+}
+function nodeFill(d) {
+  if (d.depth === 0) return "transparent";
+  const cl = clusterOf(d);
+  if (d.depth === 1) return CLUSTER_RING[cl].fill;
+  if (d.depth === 2) return DOMAIN_RING[cl].fill;
+  return STAGE_COLOR[d.data.stage] || "#C9E9DD";
+}
+function nodeText(d) {
+  if (d.depth === 1) return CLUSTER_RING[clusterOf(d)].text;
+  if (d.depth === 2) return DOMAIN_RING[clusterOf(d)].text;
+  return STAGE_TEXT[d.data.stage] || "#0F6E56";
+}
+
+function buildSunburst() {
+  const svgEl = document.getElementById("sunburst");
+  const W = Math.min(560, svgEl.clientWidth || 560);
+  const radius = W / 2;
+  sbRadius = radius;
+
+  d3.select("#sunburst").selectAll("*").remove();
+  const svg = d3.select("#sunburst")
+    .attr("viewBox", [-W/2, -W/2, W, W])
+    .attr("width", "100%")
+    .style("max-width", W + "px");
+
+  const hierarchy = d3.hierarchy(buildHierarchy())
+    .sum(d => d.value)
+    .sort((a, b) => b.value - a.value);
+  sbRoot = d3.partition().size([2 * Math.PI, hierarchy.height + 1])(hierarchy);
+  sbRoot.each(d => d.current = d);
+
+  sbArc = d3.arc()
+    .startAngle(d => d.x0)
+    .endAngle(d => d.x1)
+    .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.006))
+    .padRadius(radius * 1.5)
+    .innerRadius(d => d.y0 * radius / 4)
+    .outerRadius(d => Math.max(d.y0 * radius / 4, d.y1 * radius / 4 - 1.5));
+
+  const bgStroke = (document.documentElement.getAttribute('data-theme') === 'light') ? '#FFFFFF' : '#0A0A0F';
+
+  sbPath = svg.append("g").selectAll("path")
+    .data(sbRoot.descendants().slice(1))
+    .join("path")
+    .attr("fill", d => nodeFill(d))
+    .attr("fill-opacity", d => arcVisible(d.current) ? 1 : 0)
+    .attr("stroke", bgStroke)
+    .attr("stroke-width", 1)
+    .attr("d", d => sbArc(d.current))
+    .style("cursor", "pointer");
+
+  sbPath.append("title").text(d =>
+    d.ancestors().map(a => a.data.name).reverse().slice(1).join(" › ") + (d.data.stage ? (" · " + d.data.stage) : "")
+  );
+
+  sbPath.filter(d => d.children).on("click", clicked);
+  sbPath.filter(d => !d.children).on("click", (e, d) => updatePanel(d.parent));
+
+  sbLabel = svg.append("g")
+    .attr("pointer-events", "none")
+    .attr("text-anchor", "middle")
+    .style("user-select", "none")
+    .selectAll("text")
+    .data(sbRoot.descendants().slice(1))
+    .join("text")
+    .attr("dy", "0.35em")
+    .attr("fill-opacity", d => +labelVisible(d.current))
+    .attr("transform", d => labelTransform(d.current))
+    .attr("fill", d => nodeText(d))
+    .style("font-size", d => d.depth === 3 ? "8.5px" : (d.depth === 1 ? "12px" : "10px"))
+    .style("font-weight", d => d.depth === 1 ? "700" : "500")
+    .text(d => truncate(d.data.name, d));
+
+  sbParent = svg.append("circle")
+    .datum(sbRoot)
+    .attr("r", radius / 4)
+    .attr("fill", "transparent")
+    .attr("pointer-events", "all")
+    .style("cursor", "pointer")
+    .on("click", clicked);
+
+  sbCenter = svg.append("text")
+    .attr("text-anchor", "middle").attr("dy", "0.35em")
+    .attr("fill", "var(--text-primary)")
+    .style("font-size", "15px").style("font-weight", "700")
+    .style("pointer-events", "none")
+    .text("全域");
+
+  updatePanel(sbRoot);
+}
+
+function truncate(s, d) {
+  const max = d.depth === 3 ? 5 : (d.depth === 2 ? 5 : 6);
+  const angle = d.x1 - d.x0;
+  if (angle < 0.10 && d.depth === 3) return "";
+  return s.length > max ? s.slice(0, max) + "…" : s;
+}
+function arcVisible(d) { return d.y1 <= 4 && d.y0 >= 1 && d.x1 > d.x0; }
+function labelVisible(d) { return d.y1 <= 4 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.04; }
+function labelTransform(d) {
+  const x = (d.x0 + d.x1) / 2 * 180 / Math.PI;
+  const y = (d.y0 + d.y1) / 2 * sbRadius / 4;
+  return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
+}
+
+function clicked(event, p) {
+  sbParent.datum(p.parent || sbRoot);
+  sbCenter.text(p.depth === 0 ? "全域" : (p.data.name.length > 4 ? p.data.name.slice(0,4) : p.data.name));
+  document.getElementById("sbHint").textContent = p.depth === 0
+    ? "点击任意扇区可下钻聚焦 · 点击中心返回全局"
+    : "聚焦：" + p.ancestors().map(a => a.data.name).reverse().slice(1).join(" › ") + " · 点击中心返回";
+
+  sbRoot.each(d => d.target = {
+    x0: Math.max(0, Math.min(1, (d.x0 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+    x1: Math.max(0, Math.min(1, (d.x1 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+    y0: Math.max(0, d.y0 - p.depth),
+    y1: Math.max(0, d.y1 - p.depth)
+  });
+
+  const t = d3.select("#sunburst").transition().duration(680);
+  sbPath.transition(t).tween("data", d => {
+    const i = d3.interpolate(d.current, d.target);
+    return tt => d.current = i(tt);
+  })
+  .filter(function (d) { return +this.getAttribute("fill-opacity") || arcVisible(d.target); })
+  .attr("fill-opacity", d => arcVisible(d.target) ? 1 : 0)
+  .attrTween("d", d => () => sbArc(d.current));
+
+  sbLabel.filter(function (d) { return +this.getAttribute("fill-opacity") || labelVisible(d.target); })
+  .transition(t)
+  .attr("fill-opacity", d => +labelVisible(d.target))
+  .attrTween("transform", d => () => labelTransform(d.current));
+
+  updatePanel(p);
+}
+
+/* ===================== 右侧聚焦面板 ===================== */
+function updatePanel(node) {
+  const eyebrow = document.getElementById("pEyebrow");
+  const title = document.getElementById("pTitle");
+  const path = document.getElementById("pPath");
+  const pDomains = document.getElementById("pDomains");
+  const pProjects = document.getElementById("pProjects");
+  const stageBars = document.getElementById("pStageBars");
+  const listHead = document.getElementById("pListHead");
+  const list = document.getElementById("pList");
+
+  // 收集该节点下的所有叶子（项目）
+  const leaves = node.leaves().filter(l => l.data.stage);
+  const domainsSet = new Set();
+  node.descendants().forEach(d => { if (d.depth === 2) domainsSet.add(d.data.name); });
+
+  // 标题/路径
+  if (node.depth === 0) {
+    eyebrow.textContent = "全域总览";
+    title.textContent = "企业全域数字员工";
+    path.textContent = "4 大集群 · " + domainsSet.size + " 业务域 · " + leaves.length + " 项目";
+  } else if (node.depth === 1) {
+    eyebrow.textContent = "业务集群";
+    title.textContent = node.data.name;
+    path.textContent = (CLUSTERS.find(c=>c.name===node.data.name)||{}).desc || "";
+  } else if (node.depth === 2) {
+    eyebrow.textContent = clusterOf(node) + " · 业务域";
+    title.textContent = node.data.name;
+    path.textContent = node.ancestors().map(a => a.data.name).reverse().slice(1).join(" › ");
+  }
+
+  pDomains.textContent = node.depth >= 2 ? domainsSet.size || 1 : domainsSet.size;
+  if (node.depth === 2) pDomains.textContent = 1;
+  pProjects.textContent = leaves.length;
+
+  // 阶段统计条
+  const stages = ["落地", "试点", "规划"];
+  const counts = { "落地":0, "试点":0, "规划":0 };
+  leaves.forEach(l => { if (counts[l.data.stage] != null) counts[l.data.stage]++; });
+  const total = leaves.length || 1;
+  stageBars.innerHTML = stages.map(s => `
+    <div class="sb-stage-bar">
+      <div class="top"><span>${s}</span><span>${counts[s]} 个</span></div>
+      <div class="track"><div class="fill" style="width:${Math.round(counts[s]/total*100)}%;background:${STAGE_COLOR[s]}"></div></div>
+    </div>
+  `).join("");
+
+  // 项目清单
+  listHead.textContent = node.depth === 0 ? "全部项目（" + leaves.length + "）" : "项目清单（" + leaves.length + "）";
+  list.innerHTML = leaves.map(l => {
+    const dom = l.parent.data.name;
+    return `<div class="sb-proj-item">
+      <span class="sdot" style="background:${STAGE_COLOR[l.data.stage]}"></span>
+      <span>${l.data.name}</span>
+      <span class="pdomain">${dom}</span>
+    </div>`;
+  }).join("");
+}
+
+/* ===================== 初始化 ===================== */
+try {
+  const saved = localStorage.getItem('de_theme');
+  if (saved) applyTheme(saved);
+} catch(e) {}
+
+document.getElementById("mTotal").textContent = data.length;
+renderTabs();
+renderCards();
+buildSunburst();
+
+let _rsz;
+window.addEventListener("resize", () => { clearTimeout(_rsz); _rsz = setTimeout(buildSunburst, 200); });
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { closeDetail(); closeEdit(); }
+});
+</script>
+</body>
+</html>
